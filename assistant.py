@@ -1,35 +1,41 @@
-import openai
-import dotenv
+import requests
 import os
+import dotenv
 
+# Load environment variables
 dirname = os.path.abspath(os.path.dirname(__file__))
 dotenv.load_dotenv(os.path.join(dirname, ".env"))
-api_key = os.getenv("API_KEY") or os.getenv("OPENAI_API_KEY")
-api_base = os.getenv("API_BASE")
-model = os.getenv("MODEL")
+api_key = os.getenv("API_KEY")
 
-API_BASE = "https://api.pawan.krd/v1"  # https://api.openai.com/v1
+# Proxy API URL and headers
+API_URL = "https://api.pawan.krd/v1/chat/completions"
 HEADERS = {
-	"Authorization": "Bearer " + api_key,
-	"Content-Type": "application/json"
+    "Authorization": "Bearer " + api_key,
+    "Content-Type": "application/json"
 }
 
-openai.api_key = api_key
-openai.api_base = api_base
 
+def ask(message, system="", model="pai-001-light-beta"):
+    data = {
+        "model": model,
+        "max_tokens": 100,
+        "messages": [
+            {
+                "role": "system",
+                "content": system
+            },
+            {
+                "role": "user",
+                "content": message
+            }
+        ]
+    }
 
-def ask(message, system = "", model=model):
-	completion = openai.ChatCompletion.create(
-		model=model,
-		messages=[
-			{
-				"role": "system",
-				"content": system
-			},
-			{
-					"role": "user",
-					"content": message
-			}
-		]
-	)
-	return completion.choices[0].message.content
+    # Send POST request to the proxy API
+    response = requests.post(API_URL, headers=HEADERS, json=data)
+
+    # Handle the response
+    if response.status_code == 200:
+        return response.json()['choices'][0]['message']['content']
+    else:
+        raise Exception(f"Error: {response.status_code} - {response.text}")
