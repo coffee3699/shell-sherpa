@@ -1,22 +1,40 @@
+import re
+import warnings
+
 import assistant
 from beaupy import select, spinners
 import os
 import platform
 
 
-def generate_response(system, message):
+def generate_response(system, message, attempt=1, max_attempts=3):
     loader = spinners.Spinner(spinners.CLOCK, "CLI helper is thinking...")
     loader.start()
-    response = assistant.ask(message=message, system=system)
-    loader.stop()
 
-    return response
+    if attempt > max_attempts:
+        print(f"Maximum attempts ({max_attempts}) reached. Exiting.")
+        return None
+
+    try:
+        response = assistant.ask(message=message, system=system)
+        loader.stop()
+        return response
+    except Exception:
+        loader.stop()
+        warnings.warn(f"Attempt {attempt} to generate a response failed.", RuntimeWarning)
+
+        user_choice = input(f"Do you want to retry? ({attempt}/{max_attempts}) [y/N]: ").lower()
+        if user_choice == 'y':
+            return generate_response(system, message, attempt + 1, max_attempts)
+        else:
+            print("Operation cancelled by user.")
+            return None
 
 
 def explain_command(system_explain, prompt=""):
     if not prompt:
         prompt = input("? Which command would you like to explain?\n"
-                       "    Example: \"ls -l\"\n"
+                       "    \033[90mExample: \"ls -l\"\033[0m\n\n"
                        "> ")
 
     explanation = generate_response(system_explain, prompt)
@@ -24,48 +42,76 @@ def explain_command(system_explain, prompt=""):
     if explanation:
         print("\n\nExplanation:\n")
         print(syntax_highlight(explanation) + "\n")
-        action = select(["✅ Run this command", "📝 Explain further", "❌ Exit"]).lower()
+        options = ["✅ Run this command", "👀 Explain further", "❌ Exit"]
+        action = select(options, cursor='> ', cursor_style='white').lower()
 
-        print("You chose to " + action + ".\n")
+        print(f"\nYou chose to \033[94;1m{action}\033[0m.\n")
 
         if action == "✅ run this command":
-            os.system(prompt)
-        elif action == "📝 explain further":
+            try:
+                os.system(prompt)
+                print("Command executed successfully.\nExiting...")
+            except Exception as e:
+                warnings.warn(f"An error occurred while running the command: {e}\n"
+                              f"Exiting...", RuntimeWarning)
+                return None
+        elif action == "👀 explain further":
             print("How would you like to explain further?")
-            further_prompt = select(["🔎 Explain in more detail", "📎 Explain with an example", "❌ Exit"]).lower()
+            options = ["🔎 Explain in more detail", "🙌 Explain more concisely", "❌ Exit"]
+            action = select(options, cursor='> ', cursor_style='white').lower()
 
-            print("You chose to " + further_prompt + ".")
+            print(f"\nYou chose to \033[94;1m{action}\033[0m.\n")
 
-            if further_prompt == "❌ Exit":
+            if action == "❌ Exit":
                 return
-            explain_command(system_explain, f"Explain this command: {prompt} further with: {further_prompt}")
+            elif action == "🔎 explain in more detail":
+                explain_command(system_explain, f"Explain this command: {prompt} in more detail")
+            elif action == "🙌 explain more concisely":
+                explain_command(system_explain, f"Explain this command: {prompt} more concisely")
         else:
             return
 
 
-def suggest_command(system_suggest, prompt=""):
+def suggest_command(system_suggest, prompt="", system_explain=None):
     if not prompt:
         prompt = input("? How would you like the command to do?\n"
-                       "    Example: \"I want to list all files in a directory\"\n\n"
+                       "    Example: \"list all files in a directory\"\n\n"
                        "> ")
 
-    command = generate_response(system_suggest, prompt)
+    command = generate_response(system_suggest, prompt, max_attempts=3)
 
-    if command:
-        print("\n\nCommand:\n")
-        print("\033[1m" + syntax_highlight(command) + "\033[0m\n")
-        action = select(["✅ Run this command", "📝 Revise query", "❌ Exit"]).lower()
+    if not command:
+        print("No command was generated. Exiting.")
+        return
 
-        print("You chose to " + action + ".\n")
+    # Using regular expression to extract the command
+    match = re.search(r'{STARTH}(.*?){ENDH}', command)
+    if match:
+        extracted_command = match.group(1)
+        extracted_command = '{STARTH}' + extracted_command + '{ENDH}'
+    else:
+        print("No valid command format found. Exiting.")
+        return
 
-        if action == "✅ run this command":
-            os.system(command)
-        elif action == "📝 revise query":
-            revision_prompt = input("Revision: ")
-            return suggest_command(system_suggest, f"Change this command: {command} "
-                                                   f"with these edits: {revision_prompt}")
-        else:
-            return
+    print("\n\nCommand:\n")
+    print("\033[1m" + syntax_highlight(extracted_command) + "\033[0m\n")
+
+    action = select(["✅ Run this command", "❓ Explain this command", "📝 Revise query", "❌ Exit"]).lower()
+
+    print(f"\nYou chose to \033[94;1m{action}\033[0m.\n")
+
+    if action == "✅ run this command":
+        try:
+            os.system(extracted_command)
+        except Exception as e:
+            warnings.warn(f"An error occurred while running the command: {e}", RuntimeWarning)
+            suggest_command(system_suggest, prompt)
+    elif action == "❓ explain this command":
+        explain_command(system_explain, extracted_command)
+    elif action == "📝 revise query":
+        revision_prompt = input("Revision: ")
+        return suggest_command(system_suggest, f"Change this command: {extracted_command} "
+                                               f"with these edits: {revision_prompt}")
 
 
 def main():
@@ -73,7 +119,9 @@ def main():
 
     print("\033[90mThis is a CLI assistant that helps you with your command line needs.\n"
           "It uses the OpenAI API to generate commands and explanations.\n"
-          "This is a beta version, so please report any bugs to the developer @DY_L directly.\n\n\033[0m")
+          "This is a beta version, so please report any bugs to the developer @DY_L directly.\n\n"
+          "Contact information: li_dongyuan@bupt.edu.cn\n"
+          "\033[0m")
 
     operating_system = platform.system() + " " + platform.release()
     dirname = os.path.abspath(os.path.dirname(__file__))
@@ -86,17 +134,17 @@ def main():
     with open(os.path.join(dirname, "prompts/explain.txt")) as f:
         system_explain = os_replace(f.read())
 
-    print("What would you like to do? Choose ONE option from below:\n")
+    print("What would you like this program to do? Choose ONE option from below:\n")
 
     options = ["Explain a command", "Suggest a command"]
     action = select(options, cursor='> ', cursor_style='white').lower()
 
-    print(f"\nYou chose to {action}.\n")
+    print(f"\nYou chose to \033[94;1m{action}\033[0m.\n")
 
     if action == "explain a command":
         explain_command(system_explain)
     elif action == "suggest a command":
-        suggest_command(system_suggest)
+        suggest_command(system_suggest, system_explain=system_explain)
     else:
         print("Please select a valid option!")
 

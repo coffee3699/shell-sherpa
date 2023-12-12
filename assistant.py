@@ -18,7 +18,7 @@ HEADERS = {
 def ask(message, system="", model="pai-001-light-beta"):
     data = {
         "model": model,
-        "max_tokens": 100,
+        "max_tokens": 500,
         "messages": [
             {
                 "role": "system",
