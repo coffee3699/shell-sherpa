@@ -8,7 +8,7 @@ import platform
 
 
 def generate_response(system, message, attempt=1, max_attempts=3):
-    loader = spinners.Spinner(spinners.CLOCK, "CLI helper is thinking...")
+    loader = spinners.Spinner(spinner_characters=spinners.DOT, text="Shell Sherpa is thinking...")
     loader.start()
 
     if attempt > max_attempts:
@@ -19,9 +19,10 @@ def generate_response(system, message, attempt=1, max_attempts=3):
         response = assistant.ask(message=message, system=system)
         loader.stop()
         return response
-    except Exception:
+    except Exception as e:
         loader.stop()
         warnings.warn(f"Attempt {attempt} to generate a response failed.", RuntimeWarning)
+        print(f"Error: {e}")
 
         user_choice = input(f"Do you want to retry? ({attempt}/{max_attempts}) [y/N]: ").lower()
         if user_choice == 'y':
@@ -75,7 +76,7 @@ def explain_command(system_explain, prompt=""):
 def suggest_command(system_suggest, prompt="", system_explain=None):
     if not prompt:
         prompt = input("? How would you like the command to do?\n"
-                       "    Example: \"list all files in a directory\"\n\n"
+                       "    \033[90mExample: \"list all files in a directory\"\033[0m\n\n"
                        "> ")
 
     command = generate_response(system_suggest, prompt, max_attempts=3)
@@ -96,7 +97,8 @@ def suggest_command(system_suggest, prompt="", system_explain=None):
     print("\n\nCommand:\n")
     print("\033[1m" + syntax_highlight(extracted_command) + "\033[0m\n")
 
-    action = select(["✅ Run this command", "❓ Explain this command", "📝 Revise query", "❌ Exit"]).lower()
+    options = ["✅ Run this command", "❓ Explain this command", "📝 Revise query", "❌ Exit"]
+    action = select(options, cursor='> ', cursor_style='white').lower()
 
     print(f"\nYou chose to \033[94;1m{action}\033[0m.\n")
 
@@ -115,7 +117,7 @@ def suggest_command(system_suggest, prompt="", system_explain=None):
 
 
 def main():
-    print("Welcome to the CLI Assistant!\n")
+    print("Welcome to Shell Sherpa!\n")
 
     print("\033[90mThis is a CLI assistant that helps you with your command line needs.\n"
           "It uses the OpenAI API to generate commands and explanations.\n"
