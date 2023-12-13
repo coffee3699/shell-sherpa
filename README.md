@@ -1,6 +1,10 @@
 # Shell Sherpa
 **Your Personal Assistant for Command Line Tasks**
 
+> ### It is *strongly recommended* to read English version of README.md.
+>
+> But if you are more comfortable with reading the Chinese(中文), you can click [here](./README_ZH.md).
+
 Shell Sherpa is a powerful tool designed to assist users with command line operations, functioning similarly to GitHub Copilot but for the CLI environment. Whether you're struggling to remember specific commands or looking for the best way to execute complex tasks, Shell Sherpa is here to guide you.
 
 ## Features
