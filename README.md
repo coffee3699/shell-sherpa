@@ -8,6 +8,59 @@ Shell Sherpa is a powerful tool designed to assist users with command line opera
 - **Command Suggestion**: Get suggestions for commands based on your descriptive inputs.
 - **User-Friendly Interaction**: Easy-to-follow prompts and options to help you navigate through your CLI tasks.
 
+## Project Structure
+```bash
+shell-sherpa
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── main.py
+├── assistant.py
+├── Dockerfile
+├── misc
+│   ├── startup.png
+│   ├── explain.gif
+│   └── suggest.gif
+└── prompts
+    ├── explain.txt
+    └── suggest.txt
+```
+
+This section outlines the key components of the Shell Sherpa project, detailing the purpose and functionality of each essential file and directory.
+
+### main.py
+
+`main.py` serves as the central hub of the Shell Sherpa application, equipped with a range of features and functionalities that make it a powerful tool for CLI assistance:
+
+1. **User Interaction Interface**: It acts as the primary interface for user interaction. Users can input commands or queries, which `main.py` processes to provide relevant responses.
+
+2. **Command Explanation and Suggestion**: One of the key functionalities is to explain shell commands and suggest commands based on user input. This feature is particularly useful for beginners or those seeking to understand complex command line operations.
+
+3. **Error Handling and User Guidance**: The script is robustly designed to handle exceptions and guide users through various interactions. This includes managing unsuccessful attempts at generating responses and providing users with options to retry or modify their queries.
+
+4. **Integrating Assistant Module**: `main.py` integrates closely with the `assistant.py` module, utilizing it to communicate with the OpenAI API. This integration is seamless and is core to the functionality of Shell Sherpa.
+
+5. **Interactive Command Execution**: Upon receiving a command suggestion, users have the option to directly execute the command within the interface. This feature adds a layer of convenience, allowing users to act on the suggestions immediately.
+
+6. **User Experience Features**: The script includes user experience enhancements, such as loading spinners and syntax highlighting, to make the interaction more engaging and intuitive.
+
+7. **Retry Logic**: In scenarios where the initial attempt to generate a response fails, `main.py` includes a retry mechanism, allowing users multiple attempts to get a satisfactory response.
+
+### assistant.py
+
+`assistant.py` is a crucial module in the Shell Sherpa application, primarily focused on interfacing with a free proxy of the OpenAI API. Its functionalities are tailored to leverage this external service effectively while ensuring the smooth operation of the application:
+
+1. **Free Proxy OpenAI API Communication**: The standout feature of `assistant.py` is its ability to communicate with a free proxy of the OpenAI API. This means it sends user queries to a third-party service that acts as an intermediary, providing access to OpenAI's capabilities without direct API interaction.
+
+2. **Handling API Responses**: It is responsible for handling the responses received from the free proxy service. This involves interpreting the data, ensuring it's in a usable format, and relaying it back to `main.py` for further processing.
+
+3. **Modularity for Future Expansions**: While currently focused on interacting with a free proxy of the OpenAI API, `assistant.py` is built with modularity in mind. This design approach allows for future expansions or adaptations, such as integrating with different APIs or enhancing its current capabilities.
+
+In summary, `assistant.py` plays a pivotal role in Shell Sherpa by managing the interaction with a free proxy OpenAI API. Its design is centered around efficient and reliable communication with this service, ensuring that users can benefit from AI-driven assistance in their command line operations.
+
+### Dockerfile
+Provides the instructions for building a Docker container for the Shell Sherpa project. The Dockerfile is based on Python 3.11 and includes steps for installing all dependencies listed in `requirements.txt`. This setup ensures consistent application performance across different environments.
+
 ## Getting Started
 
 ### Prerequisites
@@ -46,7 +99,7 @@ Create a `.env` file in the project directory and add your API key:
    API_KEY=<YOUR_API_KEY>
    ```
 
-## Usage
+## Usage & Demo
 ### Local
 Run the program using the on-screen prompts:
 ```bash
@@ -83,7 +136,7 @@ If you have any questions, suggestions, or concerns, please feel free to contact
 li_dongyuan@bupt.edu.cn](mailto:li_dongyuan@bupt.edu.cn)
 
 ## License
-This project is licensed under the terms of the [MIT license]().
+This project is licensed under the terms of the MIT license.
 
 ## Acknowledgments
 - ✨ Inspired by [GitHub Copilot for CLI](https://githubnext.com/projects/copilot-cli/).
